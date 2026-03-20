@@ -1,0 +1,588 @@
+{
+  "info": {
+    "name": "Admission Management API",
+    "description": "Complete API collection for School ERP Admission Management Module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admission Enquiries",
+      "item": [
+        {
+          "name": "Create Enquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentName\": \"John Doe\",\n  \"gender\": \"Male\",\n  \"dateOfBirth\": \"2010-05-15\",\n  \"parentName\": \"Jane Doe\",\n  \"parentEmail\": \"jane@example.com\",\n  \"parentPhone\": \"+919876543210\",\n  \"interestedClass\": \"Class X\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"source\": \"WEBSITE\",\n  \"notes\": \"Looking for scholarship\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry"]
+            }
+          }
+        },
+        {
+          "name": "List Enquiries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiries?status=NEW&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiries"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "NEW"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Enquiry",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/{{enquiry_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "{{enquiry_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Enquiry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentEmail\": \"newemail@example.com\",\n  \"parentPhone\": \"+919876543211\",\n  \"status\": \"INTERESTED\",\n  \"notes\": \"Updated remarks\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/{{enquiry_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "{{enquiry_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Add Follow-up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"followUpDate\": \"2024-04-20\",\n  \"remarks\": \"Parent interested, need to send prospectus\",\n  \"status\": \"INTERESTED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/{{enquiry_id}}/follow-up",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "{{enquiry_id}}", "follow-up"]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Follow-ups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/follow-ups/pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "follow-ups", "pending"]
+            }
+          }
+        },
+        {
+          "name": "Get Enquiry Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "statistics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admissions",
+      "item": [
+        {
+          "name": "Convert Enquiry to Admission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"gender\": \"Male\",\n  \"dateOfBirth\": \"2010-05-15\",\n  \"assignedClass\": \"Class X-A\",\n  \"classId\": \"{{class_id}}\",\n  \"fatherName\": \"James Doe\",\n  \"fatherPhone\": \"+919876543210\",\n  \"fatherEmail\": \"james@example.com\",\n  \"motherName\": \"Mary Doe\",\n  \"motherPhone\": \"+919876543211\",\n  \"motherEmail\": \"mary@example.com\",\n  \"bloodGroup\": \"O+\",\n  \"aadharNo\": \"123456789012\",\n  \"specialNeeds\": \"none\",\n  \"medicalConditions\": \"Asthma\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/{{enquiry_id}}/convert",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "{{enquiry_id}}", "convert"]
+            }
+          }
+        },
+        {
+          "name": "Create Direct Admission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{student_id}}\",\n  \"academicYear\": \"2024-25\",\n  \"classAppliedFor\": \"Class X\",\n  \"section\": \"A\",\n  \"previousSchool\": \"XYZ School\",\n  \"previousClassPassed\": \"Class IX\",\n  \"previousPercentage\": 85.5,\n  \"transferCertificateNo\": \"TC123456\",\n  \"notes\": \"Transferred student\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions"]
+            }
+          }
+        },
+        {
+          "name": "List Admissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions?status=APPLIED&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "APPLIED"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Admission Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Admission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ADMITTED\",\n  \"classId\": \"{{class_id}}\",\n  \"notes\": \"Admitted on merit\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Admission Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/statistics/2024-25",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "statistics", "2024-25"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Upload Single Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"AADHAR\",\n  \"fileUrl\": \"s3://bucket/documents/aadhar.pdf\",\n  \"remarks\": \"Aadhar card copy\",\n  \"expiryDate\": \"2026-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}/documents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}", "documents"]
+            }
+          }
+        },
+        {
+          "name": "Upload Multiple Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documents\": [\n    {\n      \"documentType\": \"AADHAR\",\n      \"fileUrl\": \"s3://bucket/aadhar.pdf\",\n      \"remarks\": \"Aadhar card\"\n    },\n    {\n      \"documentType\": \"BIRTH_CERTIFICATE\",\n      \"fileUrl\": \"s3://bucket/birth.pdf\",\n      \"remarks\": \"Birth certificate\"\n    },\n    {\n      \"documentType\": \"VACCINATION_CERTIFICATE\",\n      \"fileUrl\": \"s3://bucket/vaccination.pdf\",\n      \"remarks\": \"Vaccination certificate\",\n      \"expiryDate\": \"2025-12-31\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}/documents/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}", "documents", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Verify Document",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/documents/{{document_id}}/verify?status=VERIFIED",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "documents", "{{document_id}}", "verify"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "VERIFIED"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Communications",
+      "item": [
+        {
+          "name": "Send SMS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+919876543210\",\n  \"message\": \"Dear parent, your ward's admission is confirmed. Please visit the school office for enrollment.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}/send-sms",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}", "send-sms"]
+            }
+          }
+        },
+        {
+          "name": "Send WhatsApp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+919876543210\",\n  \"message\": \"Hi 👋, Your admission is confirmed! Please complete enrollment soon.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}/send-whatsapp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}", "send-whatsapp"]
+            }
+          }
+        },
+        {
+          "name": "Send Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"parent@example.com\",\n  \"subject\": \"Admission Confirmation\",\n  \"body\": \"<h2>Welcome!</h2><p>Your ward's admission has been confirmed. Please visit our office for enrollment.</p>\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}/send-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}", "send-email"]
+            }
+          }
+        },
+        {
+          "name": "Send Status Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ADMITTED\",\n  \"parentPhone\": \"+919876543210\",\n  \"parentEmail\": \"parent@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/{{admission_id}}/notify-status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "{{admission_id}}", "notify-status"]
+            }
+          }
+        },
+        {
+          "name": "Send Follow-up Reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentPhone\": \"+919876543210\",\n  \"parentEmail\": \"parent@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admissions/enquiry/{{enquiry_id}}/send-reminder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admissions", "enquiry", "{{enquiry_id}}", "send-reminder"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    },
+    {
+      "key": "enquiry_id",
+      "value": "enquiry-uuid",
+      "type": "string"
+    },
+    {
+      "key": "admission_id",
+      "value": "admission-uuid",
+      "type": "string"
+    },
+    {
+      "key": "student_id",
+      "value": "student-uuid",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "document-uuid",
+      "type": "string"
+    },
+    {
+      "key": "class_id",
+      "value": "class-uuid",
+      "type": "string"
+    }
+  ]
+}

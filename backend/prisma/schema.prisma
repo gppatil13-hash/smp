@@ -1,0 +1,414 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== ENUMS =====
+
+enum UserRole {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  ADMISSION_COUNSELLOR
+  ACCOUNTS_TEAM
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+enum AdmissionStatus {
+  INQUIRY
+  APPLIED
+  SHORTLISTED
+  ADMITTED
+  REJECTED
+  ENROLLED
+  WAITLISTED
+}
+
+enum FeeStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMode {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+  DEBIT_CARD
+  CREDIT_CARD
+  UPI
+}
+
+enum CommunicationType {
+  SMS
+  WHATSAPP
+  EMAIL
+  IN_APP
+}
+
+enum CommunicationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  GRADUATED
+  LEFT
+}
+
+enum AcademicYear {
+  Y_2024_2025
+  Y_2025_2026
+  Y_2026_2027
+}
+
+enum ClassSection {
+  CLASS_1_A
+  CLASS_1_B
+  CLASS_2_A
+  CLASS_2_B
+  CLASS_3_A
+  CLASS_3_B
+  CLASS_4_A
+  CLASS_4_B
+  CLASS_5_A
+  CLASS_5_B
+  CLASS_6_A
+  CLASS_6_B
+  CLASS_7_A
+  CLASS_7_B
+  CLASS_8_A
+  CLASS_8_B
+  CLASS_9_A
+  CLASS_9_B
+  CLASS_10_A
+  CLASS_10_B
+  CLASS_11_A
+  CLASS_11_B
+  CLASS_12_A
+  CLASS_12_B
+}
+
+// ===== MODELS =====
+
+// Super Admin Tenant - Main platform management
+model Tenant {
+  id                    String   @id @default(cuid())
+  name                  String   @unique
+  subdomain             String   @unique
+  status                Boolean  @default(true)
+  subscriptionPlan      String   // BASIC, PREMIUM, ENTERPRISE
+  maxStudents           Int      @default(3000)
+  maxUsers              Int      @default(100)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  schools               School[]
+  users                 User[]
+  students              Student[]
+  admissions            Admission[]
+  feeStructures         FeeStructure[]
+  feeRecords            FeeRecord[]
+  communications        Communication[]
+  
+  @@index([subdomain])
+}
+
+// School under a Tenant
+model School {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  name                  String
+  registrationNumber    String
+  address               String
+  city                  String
+  state                 String
+  pinCode               String
+  principalName         String
+  principalEmail        String
+  phone                 String
+  alternatePhone        String?
+  website               String?
+  logo                  String? // S3 URL
+  status                Boolean  @default(true)
+  foundedYear           Int
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users                 User[]
+  students              Student[]
+  classes               ClassMaster[]
+  admissions            Admission[]
+  feeStructures         FeeStructure[]
+  feeRecords            FeeRecord[]
+  communications        Communication[]
+  
+  @@unique([tenantId, registrationNumber])
+  @@index([tenantId])
+}
+
+// Class Master
+model ClassMaster {
+  id                    String   @id @default(cuid())
+  schoolId              String
+  name                  String
+  section               ClassSection
+  academicYear          AcademicYear
+  classTeacher          String?
+  totalCapacity         Int      @default(40)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students              Student[]
+  
+  @@unique([schoolId, name, section, academicYear])
+  @@index([schoolId])
+}
+
+// Users (Super Admin, School Admin, Teachers, etc.)
+model User {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  schoolId              String?
+  email                 String
+  phone                 String?
+  firstName             String
+  lastName              String
+  passwordHash          String
+  role                  UserRole
+  status                Boolean  @default(true)
+  lastLogin             DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school                School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([role])
+}
+
+// Students
+model Student {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  schoolId              String
+  classId               String
+  enrollmentNo          String
+  rollNumber            Int
+  firstName             String
+  lastName              String
+  dateOfBirth           DateTime
+  gender                String
+  bloodGroup            String?
+  email                 String?
+  phone                 String?
+  fatherName            String
+  fatherPhone           String
+  fatherEmail           String?
+  motherName            String
+  motherPhone           String
+  motherEmail           String?
+  address               String
+  city                  String
+  state                 String
+  pinCode               String
+  academicYear          AcademicYear
+  admissionDate         DateTime
+  status                StudentStatus @default(ACTIVE)
+  profileImage          String? // S3 URL
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  class                 ClassMaster @relation(fields: [classId], references: [id], onDelete: Restrict)
+  feeRecords            FeeRecord[]
+  communications        Communication[]
+  
+  @@unique([schoolId, enrollmentNo])
+  @@unique([schoolId, rollNumber, classId, academicYear])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([classId])
+}
+
+// Admissions
+model Admission {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  schoolId              String
+  applicationNo         String
+  candidateName         String
+  candidateEmail        String
+  candidatePhone        String
+  dob                   DateTime
+  gender                String
+  fatherName            String
+  fatherEmail           String?
+  fatherPhone           String
+  motherName            String
+  motherEmail           String?
+  motherPhone           String
+  applyingForClass      String
+  address               String
+  city                  String
+  state                 String
+  pinCode               String
+  previousSchool        String?
+  previousClass         String?
+  status                AdmissionStatus @default(INQUIRY)
+  remarks               String?
+  appliedAt             DateTime @default(now())
+  admittedAt            DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  communications        Communication[]
+  
+  @@unique([schoolId, applicationNo])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([status])
+}
+
+// Fee Structure
+model FeeStructure {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  schoolId              String
+  academicYear          AcademicYear
+  classSection          ClassSection
+  feeType               String // TUITION, TRANSPORT, UNIFORM, etc.
+  amount                Decimal  @db.Decimal(10, 2)
+  frequency             String   // MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY
+  dueDate               Int      // Day of month when fee is due
+  description           String?
+  status                Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  feeRecords            FeeRecord[]
+  
+  @@unique([schoolId, academicYear, classSection, feeType])
+  @@index([tenantId])
+  @@index([schoolId])
+}
+
+// Fee Records for Students
+model FeeRecord {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  schoolId              String
+  studentId             String
+  feeStructureId        String
+  academicYear          AcademicYear
+  month                 Int
+  year                  Int
+  totalAmount           Decimal  @db.Decimal(10, 2)
+  paidAmount            Decimal  @db.Decimal(10, 2) @default(0)
+  dueDate               DateTime
+  paidDate              DateTime?
+  paymentMode           PaymentMode?
+  transactionId         String?
+  status                FeeStatus @default(PENDING)
+  remarks               String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student               Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  feeStructure          FeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Restrict)
+  
+  @@unique([tenantId, studentId, feeStructureId, academicYear, month, year])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([status])
+}
+
+// Communications (SMS, WhatsApp, Email)
+model Communication {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  schoolId              String
+  studentId             String?
+  admissionId           String?
+  recipientName         String
+  recipientEmail        String?
+  recipientPhone        String?
+  type                  CommunicationType
+  subject               String
+  message               String
+  status                CommunicationStatus @default(PENDING)
+  externalId            String? // Twilio SID, WhatsApp message ID, etc.
+  sentAt                DateTime?
+  deliveredAt           DateTime?
+  failureReason         String?
+  retryCount            Int      @default(0)
+  maxRetries            Int      @default(3)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student               Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  admission             Admission? @relation(fields: [admissionId], references: [id], onDelete: SetNull)
+  
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Audit Log
+model AuditLog {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  userId                String?
+  action                String
+  entity                String
+  entityId              String?
+  changes               Json?
+  ipAddress             String?
+  userAgent             String?
+  createdAt             DateTime @default(now())
+  
+  @@index([tenantId])
+  @@index([createdAt])
+}

@@ -1,0 +1,710 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== ENUMS ==========
+
+enum UserRole {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  PRINCIPAL
+  TEACHER
+  ACCOUNTANT
+  ADMISSION_COUNSELLOR
+  RECEPTIONIST
+  PARENT
+  STUDENT
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+  PASSED_OUT
+  SUSPENDED
+  DROPPED
+}
+
+enum AdmissionEnquiryStatus {
+  NEW
+  INTERESTED
+  AWAITING_INFO
+  QUALIFIED
+  NOT_INTERESTED
+  REJECTED
+}
+
+enum AdmissionStatus {
+  INQUIRY
+  APPLIED
+  SHORTLISTED
+  ADMITTED
+  ENROLLED
+  REJECTED
+  CANCELLED
+  WAITLISTED
+}
+
+enum DocumentType {
+  BIRTH_CERTIFICATE
+  AADHAR
+  PASSPORT
+  ADMISSION_FORM
+  TRANSFER_CERTIFICATE
+  CHARACTER_CERTIFICATE
+  MEDICAL_CERTIFICATE
+  VACCINATION_CERTIFICATE
+  PHOTOGRAPH
+  PARENT_ID_PROOF
+  ADDRESS_PROOF
+  INCOME_CERTIFICATE
+  CASTE_CERTIFICATE
+  HEALTH_RECORD
+  PREVIOUS_SCHOOL_REPORT
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum FeeStructureType {
+  ANNUAL
+  SEMESTER
+  QUARTERLY
+  MONTHLY
+  ONE_TIME
+}
+
+enum FeeFrequency {
+  ANNUAL
+  SEMESTER
+  QUARTERLY
+  MONTHLY
+  ON_DEMAND
+}
+
+enum InstallmentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  WAIVED
+  CANCELLED
+}
+
+enum PaymentMode {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+  CREDIT_CARD
+  DEBIT_CARD
+  UPI
+  ONLINE
+  WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum CommunicationType {
+  SMS
+  EMAIL
+  WHATSAPP
+  IN_APP
+  PHONE_CALL
+  PUSH_NOTIFICATION
+}
+
+enum CommunicationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+  MARKED_AS_READ
+}
+
+enum CommunicationRecipient {
+  STUDENT
+  PARENT
+  BOTH
+}
+
+// ========== CORE TABLES ==========
+
+model Tenant {
+  id                String   @id @default(uuid())
+  subdomain         String   @unique
+  name              String
+  registrationNo    String?  @unique
+  website           String?
+  phone             String?
+  email             String   @unique
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  country           String?  @default("India")
+  currency          String?  @default("INR")
+  subscriptionPlan  String?  @default("STANDARD")
+  maxSchools        Int      @default(1)
+  maxUsers          Int      @default(50)
+  maxStudents       Int      @default(3000)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  schools           School[]
+  users             User[]
+  students          Student[]
+  courses           Course[]
+  classes           Class[]
+  admissionEnquiries AdmissionEnquiry[]
+  admissions        Admission[]
+  feeStructures     FeeStructure[]
+  feePayments       FeePayment[]
+  receipts          Receipt[]
+  documents         Document[]
+  communicationLogs CommunicationLog[]
+
+  @@index([subdomain])
+  @@index([isActive])
+}
+
+model School {
+  id                String   @id @default(uuid())
+  tenantId          String
+  principalName     String?
+  principalPhone    String?
+  principalEmail    String?
+  registrationNo    String?
+  foundedYear       Int?
+  affiliationNumber String?
+  boardName         String?
+  noOfStudents      Int      @default(0)
+  noOfClasses       Int      @default(0)
+  noOfTeachers      Int      @default(0)
+  building          String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relations
+  users             User[]
+  students          Student[]
+  courses           Course[]
+  classes           Class[]
+  admissionEnquiries AdmissionEnquiry[]
+  admissions        Admission[]
+  feeStructures     FeeStructure[]
+
+  @@unique([tenantId, registrationNo])
+  @@index([tenantId])
+  @@index([isActive])
+}
+
+model User {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  email             String
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  role              UserRole
+  employeeId        String?
+  department        String?
+  designation       String?
+  gender            String?
+  dateOfBirth       DateTime?
+  aadharNo          String?
+  panNo             String?
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  country           String?  @default("India")
+  profileImageUrl   String?
+  isActive          Boolean  @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  // Relations
+  studentsEnrolled  Student[]
+  admissionEnquiries AdmissionEnquiry[]
+  admissions        Admission[]
+  communicationLogs CommunicationLog[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([role])
+  @@index([isActive])
+}
+
+model Student {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  enrollmentNo      String
+  rollNumber        String?
+  firstName         String
+  lastName          String
+  gender            String
+  dateOfBirth       DateTime
+  age               Int?
+  bloodGroup        String?
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  country           String?  @default("India")
+  profileImageUrl   String?
+  status            StudentStatus @default(ACTIVE)
+  enrollmentDate    DateTime @default(now())
+  classId           String?
+  
+  // Parent/Guardian Information
+  fatherName        String?
+  fatherPhone       String?
+  fatherEmail       String?
+  fatherOccupation  String?
+  motherName        String?
+  motherPhone       String?
+  motherEmail       String?
+  motherOccupation  String?
+  guardianName      String?
+  guardianPhone     String?
+  guardianRelation  String?
+  
+  // Medical & Other
+  aadharNo          String?
+  samadhaarNo       String?
+  medicalConditions String?
+  specialNeeds      Boolean   @default(false)
+  specialNeedsDetails String?
+  
+  // Links
+  assignedBy        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  enrolledByUser    User?    @relation(fields: [assignedBy], references: [id], onDelete: SetNull)
+  class             Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+
+  // Relations
+  admissions        Admission[]
+  feePayments       FeePayment[]
+  documents         Document[]
+  communicationLogs CommunicationLog[]
+  feeInstallments   StudentFeeInstallment[]
+
+  @@unique([tenantId, enrollmentNo])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([classId])
+  @@index([status])
+  @@index([enrollmentDate])
+}
+
+model Course {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  code              String
+  name              String
+  description       String?
+  board             String?
+  duration          Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  // Relations
+  classes           Class[]
+
+  @@unique([tenantId, schoolId, code])
+  @@index([tenantId])
+  @@index([schoolId])
+}
+
+model Class {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  courseId          String
+  classCode         String
+  className         String
+  academicYear      String
+  section           String?
+  capacity          Int      @default(60)
+  classTeacherId    String?
+  classroomNo       String?
+  floor             String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  course            Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  // Relations
+  students          Student[]
+  feeStructures     FeeStructure[]
+
+  @@unique([tenantId, courseId, classCode, academicYear])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([courseId])
+  @@index([isActive])
+}
+
+model AdmissionEnquiry {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  enquiryNo         String
+  enquiryDate       DateTime @default(now())
+  studentName       String
+  gender            String?
+  dateOfBirth       DateTime?
+  parentName        String?
+  parentEmail       String?
+  parentPhone       String?
+  interestedClass   String?
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  course            String?
+  status            AdmissionEnquiryStatus @default(NEW)
+  source            String?  // Website, Referral, Walk-in, etc.
+  notes             String?
+  handledBy         String?
+  followUpDate      DateTime?
+  isConverted       Boolean   @default(false)
+  convertedToAdmissionId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  handler           User?    @relation(fields: [handledBy], references: [id], onDelete: SetNull)
+
+  // Relations
+  communicationLogs CommunicationLog[]
+  documents         Document[]
+
+  @@unique([tenantId, enquiryNo])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([status])
+  @@index([enquiryDate])
+}
+
+model Admission {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  studentId         String
+  applicationNo     String
+  applicationDate   DateTime @default(now())
+  admissionDate     DateTime?
+  status            AdmissionStatus @default(APPLIED)
+  academicYear      String
+  classAppliedFor   String?
+  section           String?
+  approvedBy        String?
+  approvalDate      DateTime?
+  rejectionReason   String?
+  notes             String?
+  previousSchool    String?
+  previousClassPassed String?
+  previousPercentage Float?
+  transferCertificateNo String?
+  medicalCheckupDone Boolean @default(false)
+  medicalCheckupDate DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  approver          User?    @relation(fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  // Relations
+  documents         Document[]
+  communicationLogs CommunicationLog[]
+
+  @@unique([tenantId, applicationNo])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([status])
+  @@index([applicationDate])
+}
+
+model FeeStructure {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  classId           String
+  academicYear      String
+  feeType           String   // Tuition, Uniform, Transport, etc.
+  name              String   // e.g., "Class X Fee Structure 2024-25"
+  description       String?
+  frequency         FeeFrequency @default(ANNUAL)
+  totalAmount       Float    @default(0)
+  isActive          Boolean  @default(true)
+  effectiveFrom     DateTime @default(now())
+  effectiveTo       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  class             Class    @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  // Relations
+  components        FeeComponent[]
+  installments      FeeInstallment[]
+
+  @@unique([tenantId, classId, academicYear, feeType])
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([classId])
+  @@index([isActive])
+}
+
+model FeeComponent {
+  id                String   @id @default(uuid())
+  tenantId          String
+  feeStructureId    String
+  componentName     String   // Tuition Fee, Lab Fee, Activity Fee, etc.
+  description       String?
+  amount            Float
+  isMandatory       Boolean  @default(true)
+  percentage        Float?   // For percentage-based components
+  order             Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  feeStructure      FeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+
+  @@unique([feeStructureId, componentName])
+  @@index([tenantId])
+  @@index([feeStructureId])
+}
+
+model FeeInstallment {
+  id                String   @id @default(uuid())
+  tenantId          String
+  feeStructureId    String
+  installmentNumber Int
+  installmentName   String   // First Installment, Second Installment, etc.
+  dueDate           DateTime
+  amount            Float
+  description       String?
+  order             Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  feeStructure      FeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+  studentInstallments StudentFeeInstallment[]
+
+  @@unique([feeStructureId, installmentNumber])
+  @@index([tenantId])
+  @@index([feeStructureId])
+  @@index([dueDate])
+}
+
+model StudentFeeInstallment {
+  id                String   @id @default(uuid())
+  tenantId          String
+  studentId         String
+  installmentId     String
+  dueAmount         Float
+  paidAmount        Float    @default(0)
+  balanceAmount     Float    @default(0)
+  status            InstallmentStatus @default(PENDING)
+  dueDate           DateTime
+  paidDate          DateTime?
+  waiverAmount      Float    @default(0)
+  waiverReason      String?
+  waiverApprovedBy  String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  installment       FeeInstallment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+
+  // Relations
+  feePayments       FeePayment[]
+
+  @@unique([studentId, installmentId])
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([installmentId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model FeePayment {
+  id                String   @id @default(uuid())
+  tenantId          String
+  studentId         String
+  installmentId     String?
+  paymentNo         String
+  paymentDate       DateTime @default(now())
+  amount            Float
+  paymentMode       PaymentMode
+  status            PaymentStatus @default(COMPLETED)
+  transactionId     String?
+  referenceNo       String?
+  remarks           String?
+  uploadedByUserId  String?
+  receiptId         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentInstallment StudentFeeInstallment? @relation(fields: [installmentId], references: [id], onDelete: SetNull)
+  receipt           Receipt? @relation(fields: [receiptId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, paymentNo])
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([paymentDate])
+  @@index([status])
+  @@index([paymentMode])
+}
+
+model Receipt {
+  id                String   @id @default(uuid())
+  tenantId          String
+  receiptNo         String
+  studentId         String?
+  paymentId         String?
+  receiptDate       DateTime @default(now())
+  totalAmount       Float
+  paidAmount        Float
+  remainingAmount   Float    @default(0)
+  paymentMode       PaymentMode
+  remarks           String?
+  printCount        Int      @default(0)
+  lastPrintedAt     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payments          FeePayment[]
+
+  @@unique([tenantId, receiptNo])
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([receiptDate])
+}
+
+model Document {
+  id                String   @id @default(uuid())
+  tenantId          String
+  studentId         String?
+  admissionEnquiryId String?
+  admissionId       String?
+  documentType      DocumentType
+  fileName          String
+  fileUrl           String
+  fileSize          Int?
+  mimeType          String?
+  status            DocumentStatus @default(PENDING)
+  remarks           String?
+  uploadedBy        String?
+  verifiedBy        String?
+  verificationDate  DateTime?
+  expiryDate        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student           Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  admissionEnquiry  AdmissionEnquiry? @relation(fields: [admissionEnquiryId], references: [id], onDelete: Cascade)
+  admission         Admission? @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([admissionEnquiryId])
+  @@index([admissionId])
+  @@index([documentType])
+  @@index([status])
+}
+
+model CommunicationLog {
+  id                String   @id @default(uuid())
+  tenantId          String
+  schoolId          String?
+  senderId          String?
+  studentId         String?
+  admissionEnquiryId String?
+  parentEmail       String?
+  parentPhone       String?
+  type              CommunicationType
+  recipientType     CommunicationRecipient @default(STUDENT)
+  subject           String?
+  message           String
+  status            CommunicationStatus @default(PENDING)
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  failureReason     String?
+  maxRetries        Int      @default(3)
+  retryCount        Int      @default(0)
+  externalId        String?  // For tracking with external APIs
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  school            School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  sender            User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  student           Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  admissionEnquiry  AdmissionEnquiry? @relation(fields: [admissionEnquiryId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([type])
+  @@index([status])
+  @@index([sentAt])
+  @@index([createdAt])
+}
